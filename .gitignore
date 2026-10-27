@@ -1,0 +1,4 @@
+# Personal ledger data — never commit real finances
+*.ledger.json
+Home Ledger backup*.json
+.claude/
