@@ -2,3 +2,5 @@
 *.ledger.json
 Home Ledger backup*.json
 .claude/
+node_modules/
+dist/

@@ -1,0 +1,56 @@
+{
+  "name": "home-ledger",
+  "productName": "Home Ledger",
+  "version": "1.0.0",
+  "description": "Free, private, offline checkbook and personal-finance ledger. Manual entry, multiple accounts, reconcile, reports.",
+  "main": "desktop/main.js",
+  "private": true,
+  "author": "Home Ledger contributors",
+  "license": "MIT",
+  "homepage": "https://github.com/camelder0-dot/home-ledger",
+  "scripts": {
+    "start": "electron .",
+    "icon": "node scripts/make-icon.js",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "io.github.homeledger",
+    "productName": "Home Ledger",
+    "artifactName": "Home-Ledger-${version}-${os}-${arch}.${ext}",
+    "directories": { "output": "dist" },
+    "files": ["app/**", "desktop/**", "build/icon.png", "package.json"],
+    "publish": null,
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }],
+      "icon": "build/icon.png",
+      "signAndEditExecutable": false
+    },
+    "portable": { "artifactName": "Home-Ledger-${version}-windows-portable.${ext}" },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Home-Ledger-${version}-windows-setup.${ext}"
+    },
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["universal"] }],
+      "icon": "build/icon.png",
+      "category": "public.app-category.finance",
+      "identity": null
+    },
+    "dmg": { "artifactName": "Home-Ledger-${version}-mac.${ext}" },
+    "linux": {
+      "target": [{ "target": "AppImage", "arch": ["x64"] }, { "target": "deb", "arch": ["x64"] }],
+      "icon": "build/icon.png",
+      "category": "Office",
+      "maintainer": "Home Ledger contributors <noreply@github.com>"
+    },
+    "appImage": { "artifactName": "Home-Ledger-${version}-linux.${ext}" },
+    "deb": { "artifactName": "Home-Ledger-${version}-linux.${ext}" }
+  }
+}

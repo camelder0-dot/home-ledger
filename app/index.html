@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Nothing here loads from or talks to the internet; the browser enforces that. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Home Ledger</title>
 <style>
 :root {
@@ -189,6 +191,9 @@ let filePerm = 'none';    // 'none' | 'granted' | 'prompt'
 let lastFileWrite = null;
 let lastBackupDownload = null;
 let nextSeq = 1;
+const desktop = window.ledger || null; // set by the desktop app; null when opened in a browser
+let desktopPath = '';
+let desktopSaved = null;
 
 function emptyData() {
   const categories = [];
@@ -223,6 +228,13 @@ const byDateAsc = (a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.seq -
 let fileWriteTimer = null;
 function commit() {
   data.savedAt = Date.now();
+  if (desktop) {
+    desktop.save(JSON.stringify(data, null, 1))
+      .then(r => { desktopSaved = new Date(r.time); renderSide(); })
+      .catch(e => alert('Could not save your ledger file: ' + e.message));
+    render();
+    return;
+  }
   try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch (e) { console.error(e); }
   if (fileHandle && filePerm === 'granted') {
     clearTimeout(fileWriteTimer);
@@ -276,6 +288,18 @@ async function chooseSaveFile() {
   } catch (e) { if (e.name !== 'AbortError') alert('Could not save: ' + e.message); }
 }
 async function openFile() {
+  if (desktop) {
+    try {
+      const r = await desktop.open();
+      if (!r) return;
+      if (data.accounts.length && !confirm(`Switch to this file?\n\n${r.path}\n\nThe file you're using now stays where it is, untouched.`)) return;
+      data = normalize(r.data);
+      desktopPath = await desktop.use(r.path);
+      view = { page: 'overview', accountId: null };
+      render();
+    } catch (e) { alert('Could not open that file: ' + e.message); }
+    return;
+  }
   if (!fsSupported()) { $('#file-input').click(); return; }
   try {
     const [h] = await window.showOpenFilePicker({ types: [{ description: 'Home Ledger file', accept: { 'application/json': ['.json'] } }] });
@@ -312,6 +336,10 @@ async function forgetFile() {
   render();
 }
 function download(name, text, type) {
+  if (desktop) {
+    desktop.saveAs(text, name, type === 'text/csv' ? 'csv' : 'json').catch(e => alert('Could not save: ' + e.message));
+    return;
+  }
   const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement('a');
   a.href = url; a.download = name; a.click();
@@ -358,6 +386,11 @@ function renderSide() {
   el.innerHTML = html;
 }
 function saveBlock(nw) {
+  const nwHTML = nw === undefined ? '' : `<div class="networth"><span>Net worth</span><span class="${nw < 0 ? 'neg' : ''}">${money(nw)}</span></div>`;
+  if (desktop) return `<div class="side-foot">${nwHTML}
+    <button id="backup">Save a backup copy…</button>
+    <button id="show-folder">Show my data folder</button>
+    <div class="save-status">Saved automatically on this computer to<br><b>${esc(desktopPath)}</b>${desktopSaved ? '<br>Last saved ' + desktopSaved.toLocaleTimeString() : ''}</div></div>`;
   let status;
   if (fileHandle && filePerm === 'granted') status = `Auto-saving to <b>${esc(fileHandle.name)}</b>${lastFileWrite ? ' · ' + lastFileWrite.toLocaleTimeString() : ''}`;
   else if (fileHandle) status = `Not connected to <b>${esc(fileHandle.name)}</b> — see the yellow bar.`;
@@ -378,6 +411,7 @@ $('#side').addEventListener('click', e => {
   else if (e.target.id === 'save-file') chooseSaveFile();
   else if (e.target.id === 'open-file') openFile();
   else if (e.target.id === 'backup') downloadBackup();
+  else if (e.target.id === 'show-folder') desktop.showFolder();
 });
 function goAccount(id) {
   view = { page: 'account', accountId: id }; editingId = null; filter = { text: '', range: 'all' };
@@ -891,7 +925,32 @@ function loadSample() {
 }
 
 // ---------- Startup ----------
+function startOver() {
+  if (!confirm('Start a new, empty ledger?\n\nEverything currently entered will be cleared. (A copy from earlier today stays in the Backups folder.)')) return;
+  if (!confirm('Are you sure? This clears every account and transaction.')) return;
+  data = emptyData();
+  view = { page: 'overview', accountId: null };
+  commit();
+}
+
 (async function init() {
+  if (desktop) {
+    desktop.onMenu(action => {
+      if (action === 'open') openFile();
+      else if (action === 'backup') downloadBackup();
+      else if (action === 'csv') exportCSV(null);
+      else if (action === 'print') window.print();
+      else if (action === 'new') startOver();
+    });
+    try {
+      const r = await desktop.load();
+      desktopPath = r.path;
+      data = r.data ? normalize(r.data) : emptyData();
+      if (r.warning) alert(r.warning);
+    } catch (e) { alert('Could not load your ledger: ' + e.message); data = emptyData(); }
+    render();
+    return;
+  }
   try { data = normalize(JSON.parse(localStorage.getItem(LS_KEY))); } catch { data = emptyData(); }
   render();
   if (!fsSupported()) return;

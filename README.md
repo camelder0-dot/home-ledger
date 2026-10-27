@@ -2,7 +2,25 @@
 
 A free, private, offline checkbook and personal-finance ledger — the parts of Quicken most people actually use, without the subscription.
 
-You type your transactions in yourself. Nothing connects to your bank, nothing is sent over the internet, and there is no account to sign up for. It's one HTML file: download it, double-click it, and it opens in your browser.
+You type your transactions in yourself. Nothing connects to your bank, nothing is sent over the internet, and there is no account to sign up for. It's a regular desktop program for Windows, Mac and Linux, and your data is a file on your own computer.
+
+## Download
+
+Get the latest version from the [Releases page](https://github.com/camelder0-dot/home-ledger/releases/latest):
+
+| Computer | Download | Notes |
+|---|---|---|
+| Windows | `Home-Ledger-…-windows-setup.exe` | Installs with a Start menu and desktop shortcut. |
+| Windows (no install) | `Home-Ledger-…-windows-portable.exe` | Runs from anywhere, e.g. a USB stick. |
+| Mac (Intel or Apple silicon) | `Home-Ledger-…-mac.dmg` | Open it and drag Home Ledger to Applications. |
+| Linux | `Home-Ledger-…-linux.AppImage` or `.deb` | AppImage: make it executable and run it. |
+
+**First launch warnings.** The app isn't code-signed (that costs a yearly fee), so your computer may warn you the first time:
+
+- **Windows:** "Windows protected your PC" → click **More info** → **Run anyway**.
+- **Mac:** "can't be opened because Apple cannot check it" → open **System Settings → Privacy & Security**, scroll down, click **Open Anyway**. (Or right-click the app → **Open**.)
+
+You only have to do this once.
 
 ## Features
 
@@ -15,33 +33,38 @@ You type your transactions in yourself. Nothing connects to your bank, nothing i
 - **Categories** — sensible defaults you can rename, add, delete or switch between income and expense.
 - **Search and filter** the register by text, amount or date range.
 - **Export to CSV** for Excel or your accountant, per account or everything.
-- **Light and dark mode** follows your system setting.
+- **Bigger text** from the View menu, and light/dark mode that follows your system.
 
-## Getting started
+## Your data and privacy
 
-1. Download [`Home Ledger.html`](Home%20Ledger.html) (or clone this repo).
-2. Double-click it. It opens in your web browser — Microsoft Edge or Google Chrome recommended.
-3. Click **Add your first account**, or **Try it with made-up data** to look around first.
+- Everything saves automatically to **Documents → Home Ledger → My Finances.json** on your computer. Click **Show my data folder** in the app to find it.
+- Once a day the app also keeps a copy in **Documents → Home Ledger → Backups** (the last 30 days).
+- **File → Save a Backup Copy…** saves a copy wherever you like, such as a USB drive.
+- **File → Open a Ledger File…** switches to another file, or restores a backup, e.g. when moving to a new computer.
+- The app **cannot reach the internet**: every web request is refused, both by the desktop program and by the page itself. It has no accounts, analytics, ads or updates that phone home.
+- The file is plain JSON, so your data is never locked in.
 
-## Where your data is saved
+> Tip: put the Documents folder (or at least the Home Ledger folder) somewhere that's backed up: an external drive, or a cloud folder you trust.
 
-Everything you enter is saved automatically in your browser on that computer.
+## Building it yourself
 
-For a real copy you can back up, click **Save to a file…** (Edge and Chrome) and choose where to keep it — for example `Documents\My Finances.ledger.json`. From then on every change is saved to that file automatically. When you reopen the app, the browser may ask you to click **Reconnect** once to allow it to keep writing to the file.
+You need [Node.js](https://nodejs.org) 20 or newer.
 
-- **Download backup copy** saves a dated snapshot whenever you like.
-- **Open a file…** loads a ledger file (or a backup) — handy for moving to a new computer.
-- Firefox and Safari can use the app too; use **Download backup copy** to save and **Open a file…** to restore.
+```bash
+npm install
+npm start            # run the app
+npm run dist:win     # build Windows installer + portable .exe into dist/
+npm run dist:mac     # build the Mac .dmg (on a Mac)
+npm run dist:linux   # build AppImage + .deb (on Linux)
+```
 
-The file is plain JSON, so your data is never locked in.
+The whole interface is one self-contained file, [`app/index.html`](app/index.html): plain HTML, CSS and JavaScript with no dependencies. `desktop/` is the small Electron wrapper that gives it a window and saves the file. Pushing a tag like `v1.2.0` makes GitHub Actions build all three platforms and attach them to a Release.
 
-> Tip: keep your ledger file in a folder that's backed up (OneDrive, Dropbox, an external drive). Clearing your browser's site data erases the in-browser copy, but not your saved file.
+You can also open `app/index.html` directly in a browser to try it. In that case data is kept in the browser instead of a file.
 
 ## Contributing
 
-Issues and pull requests are welcome. The whole app is a single self-contained file (`Home Ledger.html`) with plain HTML, CSS and JavaScript — no build step, no dependencies. To work on it, open the file in a browser, edit, and refresh.
-
-Ideas that would fit well: split transactions, scheduled/recurring bills, CSV import from bank downloads, budgets, and investment holdings.
+Issues and pull requests are welcome. Ideas that would fit well: split transactions, scheduled/recurring bills, CSV import from bank downloads, budgets, and investment holdings.
 
 ## License
 
